@@ -1,7 +1,7 @@
 #include <stdlib.h>
 #include "Common.h"
 
-#ifdef WIN32
+#if defined(WIN32)
 
 static char FormatBuffer[4096]; 
 static CRITICAL_SECTION CriticalSection;
@@ -24,6 +24,40 @@ void DbgPrint(const char* fmt, ...)
 	OutputDebugStringA(FormatBuffer);
 
 	LeaveCriticalSection(&CriticalSection);
+}
+
+#elif defined(ESP_PLATFORM)
+
+#include <esp_timer.h>
+#include <esp_attr.h>
+
+#define NOP() asm volatile ("nop")
+
+extern "C" IRAM_ATTR unsigned long micros()
+{
+	return (unsigned long) esp_timer_get_time();
+}
+
+extern "C" IRAM_ATTR void delayMicroseconds(unsigned int us)
+{
+	// Adapted from
+	uint32_t m = micros();
+	if (us)
+	{
+		uint32_t e = m + us;
+		if (m > e ) // overflow
+		{
+			while (micros() > e)
+			{
+				NOP();
+			}
+		}
+
+		while (micros() < e) 
+		{
+			NOP();
+		}
+	}
 }
 
 #else

@@ -1,5 +1,10 @@
 #include "CEC_Device.h"
+
+#if defined(ESP_PLATFORM)
+#include "CEC_ESP32_Compat.hpp"
+#else
 #include <Arduino.h>
+#endif
 
 CEC_Device::CEC_Device(int physicalAddress, int in_line, int out_line)
 : CEC_LogicalDevice(physicalAddress)
